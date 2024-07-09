@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 precioMetroCuadradoInput.value = 30;
                 break;
             case 'irregular':
-                precioMetroCuadradoInput.value = 40;
+                precioMetroCuadradoInput.value = 42;
                 break;
             case 'arenado':
                 precioMetroCuadradoInput.value = 45; // Asumimos un precio para espejos arenados
@@ -99,10 +99,10 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (lucesLed) {
             if (luzRgb) {
-                precioFinal += 6 + (3.5 * perimetro);
+                precioFinal += 6 + (3.25 * perimetro);
                 detallesLuces.push('Luz RGB');
             } else if (luzUnColor) {
-                precioFinal += 4 + (2.5 * perimetro);
+                precioFinal += 4 + (3 * perimetro);
                 detallesLuces.push('Luz un color');
             } else if (botonTouch) {
                 precioFinal += 30 + (5 * perimetro);
