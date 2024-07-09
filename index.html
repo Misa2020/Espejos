@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calcular precios de Espejos</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Calculadora de Precios de Espejos</h1>
+        <form id="calculatorForm">
+            <label for="tipoEspejo">Tipo de espejo:</label>
+            <select id="tipoEspejo" required>
+                <option value="">Seleccione un tipo</option>
+                <option value="cuadradoRectangular">Espejos cuadrados y rectangulares</option>
+                <option value="irregular">Espejos irregulares</option>
+                <option value="arenado">Espejos arenados</option>
+            </select>
+
+            <label for="precioMetroCuadrado">Precio por plancha de Espejo ($):</label>
+            <input type="number" id="precioMetroCuadrado" readonly>
+
+            <label for="alto">Alto del espejo (cm):</label>
+            <input type="number" id="alto" required>
+
+            <label for="ancho">Ancho del espejo (cm):</label>
+            <input type="number" id="ancho" required>
+
+            <div class="checkbox-container">
+                <input type="checkbox" id="sistemaInstalacion">
+                <label for="sistemaInstalacion">Sistema de instalación</label>
+            </div>
+
+            <div class="checkbox-container">
+                <input type="checkbox" id="lucesLed">
+                <label for="lucesLed">Luces LED</label>
+            </div>
+
+            <div id="opcionesLed" style="display: none; margin-left: 20px;">
+                <div class="checkbox-container">
+                    <input type="checkbox" id="luzRgb">
+                    <label for="luzRgb">Luz RGB</label>
+                </div>
+                <div class="checkbox-container">
+                    <input type="checkbox" id="luzUnColor">
+                    <label for="luzUnColor">Luz un color</label>
+                </div>
+                <div class="checkbox-container">
+                    <input type="checkbox" id="botonTouch">
+                    <label for="botonTouch">Botón touch</label>
+                </div>
+            </div>
+
+            <button type="submit">Calcular Precio</button>
+        </form>
+        <div id="resultado"></div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
