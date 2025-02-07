@@ -1,124 +1,163 @@
-document.addEventListener('DOMContentLoaded', function() {
-    const tipoEspejoSelect = document.getElementById('tipoEspejo');
-    const precioMetroCuadradoInput = document.getElementById('precioMetroCuadrado');
-    const lucesLedCheckbox = document.getElementById('lucesLed');
-    const opcionesLed = document.getElementById('opcionesLed');
-    const luzRgbCheckbox = document.getElementById('luzRgb');
-    const luzUnColorCheckbox = document.getElementById('luzUnColor');
-    const botonTouchCheckbox = document.getElementById('botonTouch');
-    const sistemaInstalacionCheckbox = document.getElementById('sistemaInstalacion');
+// Configuración de precios base
+const PRECIOS = {
+    cuadradoRectangular: 30,  // Precio por m²
+    irregular: 40,            // Precio por m²
+    arenado: 43,             // Precio por m²
+    luzRgb: {
+        base: 6,
+        porMetro: 3.50
+    },
+    luzUnColor: {
+        base: 4,
+        porMetro: 3.50
+    },
+    botonTouch: {
+        base: 40,
+        porMetro: 5
+    },
+    instalacion: {
+        soportes: 6,
+        flotante: 15
+    },
+    marco: {
+        pvc: 4,    // por metro
+        metal: 12  // por metro
+    }
+};
 
-    function actualizarPrecioMetroCuadrado() {
-        switch (tipoEspejoSelect.value) {
-            case 'cuadradoRectangular':
-                precioMetroCuadradoInput.value = 30;
-                break;
-            case 'irregular':
-                precioMetroCuadradoInput.value = 40;
-                break;
-            case 'arenado':
-                precioMetroCuadradoInput.value = 45; // Asumimos un precio para espejos arenados
-                break;
-            default:
-                precioMetroCuadradoInput.value = '';
-        }
+// Cache de elementos DOM
+const elementos = {
+    tipoEspejo: document.getElementById('tipoEspejo'),
+    alto: document.getElementById('alto'),
+    ancho: document.getElementById('ancho'),
+    tipoMarco: document.getElementById('tipoMarco'),
+    tipoInstalacion: document.getElementById('tipoInstalacion'),
+    grupoLuces: document.getElementById('grupoLuces'),
+    tipoLuz: document.getElementById('tipoLuz'),
+    acabado: document.getElementById('acabado'),
+    resultado: document.getElementById('resultado')
+};
+
+// Funciones auxiliares
+function convertirCmAMetros(valorCm) {
+    return (parseFloat(valorCm) || 0) / 100;
+}
+
+function calcularDimensiones() {
+    const alto = convertirCmAMetros(elementos.alto.value);
+    const ancho = convertirCmAMetros(elementos.ancho.value);
+    return {
+        area: alto * ancho,
+        perimetro: 2 * (alto + ancho)
+    };
+}
+
+function actualizarOpcionesMarco() {
+    const opciones = ['<option value="ninguno">Sin marco</option>'];
+
+    if (elementos.tipoEspejo.value === 'regular') {
+        opciones.push(
+            '<option value="pvc">Marco PVC</option>',
+            '<option value="metal">Marco Metálico</option>'
+        );
+    } else if (elementos.tipoEspejo.value === 'irregular') {
+        opciones.push('<option value="pvc">Marco PVC</option>');
     }
 
-    tipoEspejoSelect.addEventListener('change', actualizarPrecioMetroCuadrado);
+    elementos.tipoMarco.innerHTML = opciones.join('');
+}
 
-    lucesLedCheckbox.addEventListener('change', function() {
-        opcionesLed.style.display = this.checked ? 'block' : 'none';
-        if (this.checked) {
-            sistemaInstalacionCheckbox.checked = true;
-        } else {
-            luzRgbCheckbox.checked = false;
-            luzUnColorCheckbox.checked = false;
-            botonTouchCheckbox.checked = false;
-        }
-    });
+function actualizarOpcionesLuz() {
+    const esInstalacionSoportes = elementos.tipoInstalacion.value === 'soportes';
+    elementos.grupoLuces.classList.toggle('disabled', esInstalacionSoportes);
+    elementos.tipoLuz.disabled = esInstalacionSoportes;
 
-    function uncheckOthers(checkedBox) {
-        const checkboxes = [luzRgbCheckbox, luzUnColorCheckbox, botonTouchCheckbox];
-        checkboxes.forEach(checkbox => {
-            if (checkbox !== checkedBox) {
-                checkbox.checked = false;
-            }
-        });
+    if (esInstalacionSoportes) {
+        elementos.tipoLuz.value = 'ninguna';
+    }
+}
+
+function calcularPrecioBase(area, tipoEspejo) {
+    return tipoEspejo === 'regular' ?
+        PRECIOS.cuadradoRectangular * area :
+        PRECIOS.irregular * area;
+}
+
+function calcularPrecioAcabado(area, acabado) {
+    return acabado === 'arenado' ?
+        (PRECIOS.arenado - PRECIOS.cuadradoRectangular) * area : 0;
+}
+
+function calcularPrecioInstalacion(tipoInstalacion) {
+    return PRECIOS.instalacion[tipoInstalacion] || 0;
+}
+
+function calcularPrecioMarco(perimetro, tipoMarco) {
+    if (tipoMarco === 'pvc') return PRECIOS.marco.pvc * perimetro;
+    if (tipoMarco === 'metal') return PRECIOS.marco.metal * perimetro;
+    return 0;
+}
+
+function calcularPrecioLuz(perimetro, tipoLuz) {
+    switch (tipoLuz) {
+        case 'rgb':
+            return PRECIOS.luzRgb.base + (PRECIOS.luzRgb.porMetro * perimetro);
+        case 'simple':
+            return PRECIOS.luzUnColor.base + (PRECIOS.luzUnColor.porMetro * perimetro);
+        case 'touch':
+            return PRECIOS.botonTouch.base + (PRECIOS.botonTouch.porMetro * perimetro);
+        default:
+            return 0;
+    }
+}
+
+function calcularPrecio() {
+    const { area, perimetro } = calcularDimensiones();
+
+    if (area <= 0 || perimetro <= 0) {
+        elementos.resultado.innerHTML = 'Por favor, ingrese dimensiones válidas';
+        return;
     }
 
-    function actualizarTipoEspejo() {
-        if (botonTouchCheckbox.checked && 
-            (tipoEspejoSelect.value === 'cuadradoRectangular' || tipoEspejoSelect.value === 'irregular')) {
-            tipoEspejoSelect.value = 'arenado';
-            actualizarPrecioMetroCuadrado();
-        }
-    }
+    const precioTotal =
+        calcularPrecioBase(area, elementos.tipoEspejo.value) +
+        calcularPrecioAcabado(area, elementos.acabado.value) +
+        calcularPrecioInstalacion(elementos.tipoInstalacion.value) +
+        calcularPrecioMarco(perimetro, elementos.tipoMarco.value) +
+        calcularPrecioLuz(perimetro, elementos.tipoLuz.value);
 
-    luzRgbCheckbox.addEventListener('change', function() {
-        if (this.checked) uncheckOthers(this);
+    elementos.resultado.innerHTML = `
+        Precio total: $${precioTotal.toFixed(2)}<br>
+        Área: ${area.toFixed(2)} m²<br>
+        Perímetro: ${perimetro.toFixed(2)} metros
+    `;
+}
+
+// Event listeners
+function inicializarEventListeners() {
+    elementos.tipoEspejo.addEventListener('change', () => {
+        actualizarOpcionesMarco();
+        calcularPrecio();
     });
 
-    luzUnColorCheckbox.addEventListener('change', function() {
-        if (this.checked) uncheckOthers(this);
+    elementos.tipoInstalacion.addEventListener('change', () => {
+        actualizarOpcionesLuz();
+        calcularPrecio();
     });
 
-    botonTouchCheckbox.addEventListener('change', function() {
-        if (this.checked) {
-            uncheckOthers(this);
-            actualizarTipoEspejo();
-        }
+    const elementosConChange = ['alto', 'ancho', 'tipoLuz', 'tipoMarco', 'acabado'];
+    elementosConChange.forEach(id => {
+        elementos[id].addEventListener('input', calcularPrecio);
     });
+}
 
-    document.getElementById('calculatorForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        const tipoEspejo = tipoEspejoSelect.value;
-        const precioMetroCuadrado = parseFloat(precioMetroCuadradoInput.value);
-        const alto = parseFloat(document.getElementById('alto').value) / 100; // Convertir cm a metros
-        const ancho = parseFloat(document.getElementById('ancho').value) / 100; // Convertir cm a metros
-        const sistemaInstalacion = sistemaInstalacionCheckbox.checked;
-        const lucesLed = lucesLedCheckbox.checked;
-        const luzRgb = luzRgbCheckbox.checked;
-        const luzUnColor = luzUnColorCheckbox.checked;
-        const botonTouch = botonTouchCheckbox.checked;
-        
-        if (!tipoEspejo || isNaN(precioMetroCuadrado)) {
-            alert('Por favor, seleccione un tipo de espejo válido.');
-            return;
-        }
-        
-        const area = alto * ancho;
-        const perimetro = 2 * (alto + ancho); // Cálculo del perímetro para las luces
-        let precioFinal = area * precioMetroCuadrado;
-        
-        if (sistemaInstalacion || lucesLed) {
-            precioFinal += 15; // Siempre se suma si hay luces LED o sistema de instalación
-        }
-        
-        let detallesLuces = [];
-        
-        if (lucesLed) {
-            if (luzRgb) {
-                precioFinal += 6 + (3.50 * perimetro);
-                detallesLuces.push('Luz RGB');
-            } else if (luzUnColor) {
-                precioFinal += 4 + (3.5 * perimetro);
-                detallesLuces.push('Luz un color');
-            } else if (botonTouch) {
-                precioFinal += 30 + (5 * perimetro);
-                detallesLuces.push('Botón touch');
-            }
-        }
-        
-        const resultadoDiv = document.getElementById('resultado');
-        resultadoDiv.innerHTML = `
-            <h2>Resultado:</h2>
-            <p>Tipo de espejo: ${tipoEspejo}</p>
-            <p>Área del espejo: ${area.toFixed(2)} m²</p>
-            <p>Perímetro del espejo: ${perimetro.toFixed(2)} m</p>
-            <p>Precio final: ${precioFinal.toFixed(2)} €</p>
-            ${sistemaInstalacion || lucesLed ? '<p>Incluye sistema de instalación</p>' : ''}
-            ${lucesLed && detallesLuces.length > 0 ? `<p>Incluye luces LED: ${detallesLuces.join(', ')}</p>` : ''}
-        `;
-    });
-});
+// Inicialización
+function inicializar() {
+    actualizarOpcionesMarco();
+    actualizarOpcionesLuz();
+    inicializarEventListeners();
+    calcularPrecio();
+}
+
+// Iniciar la aplicación cuando el DOM esté listo
+document.addEventListener('DOMContentLoaded', inicializar);
